@@ -3,3 +3,10 @@ uvicorn
 sqlalchemy
 psycopg2-binary
 python-dotenv
+python-jose[cryptography]
+npm create vite@latest frontend -- --template react-ts
+cd frontend
+npm install
+npm install react-router-dom zustand axios
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
