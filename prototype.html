@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Intrinsic Bio-Sensing of Trees</title>
+<style>
+  :root{
+    --bg:#F5F6F4; --panel:#FFFFFF; --sidebar:#12261E; --sidebar-hover:#1B372B;
+    --forest:#1F5C43; --forest-light:#E3EFE8; --amber:#B9740D; --amber-light:#FDF1E1;
+    --red:#B23A2E; --red-light:#FBEAE7;
+    --ink:#16211C; --ink-2:#5B6A63; --ink-3:#8B978F; --border:#E1E5E1;
+    --mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+    --sans:'IBM Plex Sans','Segoe UI',Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);font-family:var(--sans);color:var(--ink);}
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+ 
+  /* ---------- LOGIN ---------- */
+  #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--sidebar);}
+  .login-card{background:var(--panel);width:360px;border-radius:10px;padding:32px 28px;box-shadow:0 12px 40px rgba(0,0,0,.25);}
+  .login-brand{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--forest);text-transform:uppercase;margin-bottom:4px;}
+  .login-title{font-size:19px;font-weight:600;margin-bottom:20px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:11.5px;color:var(--ink-2);margin-bottom:5px;}
+  .field input{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
+  .field input:focus{outline:none;border-color:var(--forest);}
+  .login-btn{width:100%;padding:10px;background:var(--forest);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;margin-top:6px;}
+  .login-btn:hover{background:#184a36;}
+  .login-hint{font-size:11px;color:var(--ink-3);margin-top:14px;font-family:var(--mono);text-align:center;}
+  .login-error{font-size:12px;color:var(--red);margin-top:8px;display:none;}
+ 
+  /* ---------- APP SHELL ---------- */
+  #app{display:none;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--panel);}
+  .brand{font-family:var(--mono);font-size:13px;letter-spacing:.08em;color:var(--ink-2);text-transform:uppercase;}
+  .topbar-right{display:flex;align-items:center;gap:14px;}
+  .user-chip{display:flex;align-items:center;gap:8px;font-size:12.5px;}
+  .avatar{width:26px;height:26px;border-radius:50%;background:var(--forest);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;}
+  .logout-link{font-size:12px;color:var(--ink-3);text-decoration:underline;background:none;border:none;}
+ 
+  .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 53px);}
+  .sidebar{background:var(--sidebar);padding:20px 14px;color:#DCE7DF;}
+  .logo{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:#8FB3A0;text-transform:uppercase;margin-bottom:24px;padding:0 8px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:6px;font-size:13px;margin-bottom:2px;color:#B9C7BE;border:none;background:none;width:100%;text-align:left;}
+  .nav-item.active{background:var(--forest);color:#fff;}
+  .nav-item:not(.active):hover{background:var(--sidebar-hover);}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+ 
+  .content{padding:24px 28px 60px;max-width:1160px;}
+  .page{display:none;}
+  .page.active{display:block;}
+  .page-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px;}
+  .page-title{font-size:19px;font-weight:600;}
+  .page-sub{font-size:12px;color:var(--ink-3);font-family:var(--mono);}
+ 
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+  .kpi{border:1px solid var(--border);border-radius:8px;padding:14px 16px;background:var(--panel);}
+  .kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:6px;}
+  .kpi-value{font-size:22px;font-weight:600;font-family:var(--mono);}
+  .kpi-value.ok{color:var(--forest);} .kpi-value.warn{color:var(--amber);} .kpi-value.bad{color:var(--red);}
+ 
+  .row2{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;}
+  .card{border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:16px;}
+  .card-title{font-size:13px;font-weight:600;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .card-title span.tag{font-size:10px;font-weight:400;font-family:var(--mono);color:var(--ink-3);}
+  .placeholder{height:200px;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--ink-3);font-size:12px;font-family:var(--mono);background:repeating-linear-gradient(45deg,transparent,transparent 10px,#FAFBFA 10px,#FAFBFA 20px);}
+ 
+  .alert{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-radius:6px;font-size:12px;margin-bottom:6px;}
+  .alert.bad{background:var(--red-light);color:var(--red);} .alert.warn{background:var(--amber-light);color:var(--amber);}
+  .alert.gone{opacity:.4;text-decoration:line-through;}
+ 
+  .btn{border:1px solid var(--border);background:var(--panel);border-radius:6px;padding:7px 14px;font-size:12px;font-weight:600;color:var(--ink);}
+  .btn:hover{border-color:var(--ink-3);}
+  .btn.primary{background:var(--forest);border-color:var(--forest);color:#fff;}
+  .btn.primary:hover{background:#184a36;}
+  .btn.danger{background:var(--red);border-color:var(--red);color:#fff;}
+  .btn.danger:hover{background:#8f2e24;}
+  .btn.small{padding:4px 9px;font-size:11px;}
+  .btn.ghost{background:none;border:none;color:var(--ink-2);text-decoration:underline;padding:2px 4px;}
+ 
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3);padding:8px 10px;border-bottom:1px solid var(--border);}
+  td{padding:10px 10px;border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  .status-pill{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;}
+  .status-pill.online{background:var(--forest-light);color:var(--forest);}
+  .status-pill.offline{background:var(--red-light);color:var(--red);}
+  .status-pill.idle{background:#EEF0EC;color:var(--ink-2);}
+  .status-pill.running{background:var(--amber-light);color:var(--amber);}
+ 
+  .filter-row{display:flex;gap:8px;margin-bottom:14px;}
+  .filter-row select{font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--panel);color:var(--ink);}
+  .annot{font-size:10.5px;color:var(--ink-3);font-family:var(--mono);margin-top:4px;}
+  .actions{display:flex;gap:8px;}
+  .empty-row td{text-align:center;color:var(--ink-3);font-style:italic;padding:20px;}
+ 
+  /* modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,15,12,.45);align-items:center;justify-content:center;z-index:50;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--panel);width:380px;border-radius:10px;padding:22px;}
+  .modal h3{margin:0 0 16px;font-size:15px;font-weight:600;}
+  .modal .field input,.modal .field select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:6px;font-size:12.5px;opacity:0;transform:translateY(8px);transition:.2s;z-index:60;}
+  .toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+ 
+<!-- ================= LOGIN ================= -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">GreenX Engineers</div>
+    <div class="login-title">Sign in to Bio-Sensing Console</div>
+    <div class="field"><label>Email</label><input id="login-email" type="email" value="dhana@greenx.dev"></div>
+    <div class="field"><label>Password</label><input id="login-pass" type="password" value="demo1234"></div>
+    <button class="login-btn" onclick="doLogin()">Sign in</button>
+    <div class="login-error" id="login-error">Invalid credentials. Try the demo values shown.</div>
+    <div class="login-hint">Demo login — any non-empty email + password works</div>
+  </div>
+</div>
+ 
+<!-- ================= APP ================= -->
+<div id="app">
+  <div class="topbar">
+    <div class="brand">GreenX Engineers / Intrinsic Bio-Sensing of Trees</div>
+    <div class="topbar-right">
+      <div class="user-chip"><div class="avatar">DP</div><span id="user-email-label">dhana@greenx.dev</span></div>
+      <button class="logout-link" onclick="doLogout()">Log out</button>
+    </div>
+  </div>
+ 
+  <div class="layout">
+    <div class="sidebar">
+      <div class="logo">GreenX / v1.0</div>
+      <button class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')"><span class="dot"></span>Dashboard</button>
+      <button class="nav-item" data-page="experiments" onclick="showPage('experiments')"><span class="dot"></span>Experiments</button>
+      <button class="nav-item" data-page="analytics" onclick="showPage('analytics')"><span class="dot"></span>Analytics</button>
+      <button class="nav-item" data-page="devices" onclick="showPage('devices')"><span class="dot"></span>Devices</button>
+    </div>
+ 
+    <div class="content">
+ 
+      <!-- DASHBOARD: live monitoring overview, read-only telemetry + alerts you can acknowledge -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-head">
+          <div><div class="page-title">Dashboard — live monitoring</div><div class="page-sub">Read-only telemetry overview · WS /live</div></div>
+          <div class="actions"><button class="btn" onclick="ackAll()">Acknowledge all</button></div>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi"><div class="kpi-label">Bioelectric voltage</div><div class="kpi-value ok">42 mV</div></div>
+          <div class="kpi"><div class="kpi-label">Bark temperature</div><div class="kpi-value ok">29.4 °C</div></div>
+          <div class="kpi"><div class="kpi-label">Soil moisture</div><div class="kpi-value warn">61%</div></div>
+          <div class="kpi"><div class="kpi-label">LoRa signal quality</div><div class="kpi-value ok">-82 dBm</div></div>
+        </div>
+        <div class="row2">
+          <div class="card">
+            <div class="card-title">Tree node map <span class="tag">Leaflet · color = status</span></div>
+            <div class="placeholder">Map: markers colored by Normal / Heat stress / Fire risk / Cutting alert</div>
+            <div class="annot">Legend: green = normal · amber = heat stress · red = fire risk · gray = offline</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Live alerts <span class="tag" id="alert-count">3 active</span></div>
+            <div id="alert-list"></div>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- EXPERIMENTS: this is the CRUD workspace — create/stop/delete experiment RUNS -->
+      <div class="page" id="page-experiments">
+        <div class="page-head">
+          <div><div class="page-title">Experiments — run manager</div><div class="page-sub">Create, stop and delete experiment records · POST /experiment/start · POST /experiment/stop</div></div>
+          <button class="btn primary" onclick="openExpModal()">+ Start experiment</button>
+        </div>
+        <div class="card">
+          <div class="card-title">All experiments</div>
+          <table>
+            <thead><tr><th>Name</th><th>Stress type</th><th>Target tree</th><th>Start</th><th>Status</th><th></th></tr></thead>
+            <tbody id="exp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+ 
+      <!-- ANALYTICS -->
+      <div class="page" id="page-analytics">
+        <div class="page-head">
+          <div><div class="page-title">Analytics</div><div class="page-sub">GET /analytics · ECharts</div></div>
+        </div>
+        <div class="filter-row">
+          <select id="an-tree"><option>Tree #04</option><option>Tree #12</option><option>Tree #21</option></select>
+          <select id="an-range"><option>Last 24 hours</option><option>Last 7 days</option><option>Last 30 days</option></select>
+          <button class="btn" onclick="refreshAnalytics()">Apply</button>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-title">Trend — voltage / temperature / moisture <span class="tag" id="an-tag">dual-axis line</span></div>
+          <div class="placeholder" id="an-chart">Time-series chart with overlay bands for detected stress windows</div>
+        </div>
+        <div class="row2">
+          <div class="card"><div class="card-title">FFT / frequency decomposition</div><div class="placeholder" style="height:150px;">Spectrum plot</div></div>
+          <div class="card">
+            <div class="card-title">Stress score</div>
+            <div class="kpi"><div class="kpi-label">Current classification</div><div class="kpi-value warn">Heat stress · 0.71</div></div>
+            <div class="annot">Rule-based MVP score; model output post-training</div>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- DEVICES: CRUD workspace for the ESP32 fleet -->
+      <div class="page" id="page-devices">
+        <div class="page-head">
+          <div><div class="page-title">Devices — fleet manager</div><div class="page-sub">Register, edit and remove ESP32 nodes · GET/POST/DELETE /devices</div></div>
+          <button class="btn primary" onclick="openDevModal()">+ Register device</button>
+        </div>
+        <div class="card">
+          <table>
+            <thead><tr><th>ESP32 ID</th><th>Firmware</th><th>Battery</th><th>Status</th><th>Last seen</th><th></th></tr></thead>
+            <tbody id="dev-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+ 
+    </div>
+  </div>
+</div>
+ 
+<!-- Experiment modal -->
+<div class="modal-overlay" id="exp-modal">
+  <div class="modal">
+    <h3>Start experiment</h3>
+    <div class="field"><label>Name</label><input id="exp-name" placeholder="exp_0092"></div>
+    <div class="field"><label>Stress type</label>
+      <select id="exp-type"><option>Heat</option><option>Fire risk sim</option><option>Cutting alert</option><option>Normal baseline</option></select>
+    </div>
+    <div class="field"><label>Target tree</label>
+      <select id="exp-tree"><option>#04</option><option>#12</option><option>#21</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('exp-modal')">Cancel</button>
+      <button class="btn primary" onclick="createExperiment()">Start</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- Device modal -->
+<div class="modal-overlay" id="dev-modal">
+  <div class="modal">
+    <h3 id="dev-modal-title">Register device</h3>
+    <input type="hidden" id="dev-edit-id">
+    <div class="field"><label>ESP32 ID</label><input id="dev-id" placeholder="node_08"></div>
+    <div class="field"><label>Firmware version</label><input id="dev-fw" placeholder="v1.3.2"></div>
+    <div class="field"><label>Battery %</label><input id="dev-batt" type="number" min="0" max="100" placeholder="80"></div>
+    <div class="field"><label>Status</label>
+      <select id="dev-status"><option value="online">Online</option><option value="idle">Idle</option><option value="offline">Offline</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('dev-modal')">Cancel</button>
+      <button class="btn primary" onclick="saveDevice()">Save</button>
+    </div>
+  </div>
+</div>
+ 
+<div class="toast" id="toast"></div>
+ 
+<script>
+/* ---------------- AUTH ---------------- */
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const err = document.getElementById('login-error');
+  if(!email || !pass){ err.style.display='block'; return; }
+  err.style.display='none';
+  document.getElementById('user-email-label').textContent = email;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+}
+function doLogout(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+ 
+/* ---------------- NAV ---------------- */
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelector('.nav-item[data-page="'+name+'"]').classList.add('active');
+}
+ 
+/* ---------------- TOAST ---------------- */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+ 
+/* ---------------- ALERTS (dashboard) ---------------- */
+let alerts = [
+  {id:1, level:'bad', text:'Fire risk — Tree #12', acked:false},
+  {id:2, level:'warn', text:'Heat stress — Tree #04', acked:false},
+  {id:3, level:'warn', text:'Cutting alert — Tree #21', acked:false},
+];
+function renderAlerts(){
+  const list = document.getElementById('alert-list');
+  list.innerHTML = alerts.map(a=>`
+    <div class="alert ${a.level} ${a.acked?'gone':''}">
+      <span>${a.text}</span>
+      ${a.acked ? '<span class="annot">acked</span>' : `<button class="btn small" onclick="ackAlert(${a.id})">Ack</button>`}
+    </div>`).join('');
+  document.getElementById('alert-count').textContent = alerts.filter(a=>!a.acked).length + ' active';
+}
+function ackAlert(id){ alerts = alerts.map(a=> a.id===id ? {...a, acked:true} : a); renderAlerts(); toast('Alert acknowledged'); }
+function ackAll(){ alerts = alerts.map(a=>({...a, acked:true})); renderAlerts(); toast('All alerts acknowledged'); }
+ 
+/* ---------------- EXPERIMENTS CRUD ---------------- */
+let experiments = [
+  {id:'exp_0090', type:'Fire risk sim', tree:'#12', start:'Aug 14, 09:02', status:'stopped'},
+  {id:'exp_0089', type:'Cutting alert', tree:'#21', start:'Aug 12, 15:10', status:'stopped'},
+  {id:'exp_0088', type:'Normal baseline', tree:'#04', start:'Aug 10, 08:00', status:'stopped'},
+];
+function renderExperiments(){
+  const tb = document.getElementById('exp-tbody');
+  if(experiments.length===0){ tb.innerHTML = '<tr class="empty-row"><td colspan="6">No experiments yet. Start one above.</td></tr>'; return; }
+  tb.innerHTML = experiments.map(e=>`
+    <tr>
+      <td>${e.id}</td><td>${e.type}</td><td>${e.tree}</td><td>${e.start}</td>
+      <td><span class="status-pill ${e.status==='running'?'running':'idle'}">${e.status==='running'?'Running':'Stopped'}</span></td>
+      <td class="actions">
+        ${e.status==='running' ? `<button class="btn small danger" onclick="stopExperiment('${e.id}')">Stop</button>` : `<button class="btn small" onclick="exportCsv('${e.id}')">Export CSV</button>`}
+        <button class="btn ghost small" onclick="deleteExperiment('${e.id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+function openExpModal(){
+  document.getElementById('exp-name').value = 'exp_' + String(Math.floor(Math.random()*900+100));
+  document.getElementById('exp-modal').classList.add('open');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function createExperiment(){
+  const name = document.getElementById('exp-name').value.trim();
+  if(!name){ toast('Name is required'); return; }
+  experiments.unshift({
+    id:name,
+    type:document.getElementById('exp-type').value,
+    tree:document.getElementById('exp-tree').value,
+    start:new Date().toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}),
+    status:'running'
+  });
+  renderExperiments(); closeModal('exp-modal'); toast('Experiment started');
+}
+function stopExperiment(id){
+  experiments = experiments.map(e => e.id===id ? {...e, status:'stopped'} : e);
+  renderExperiments(); toast(id + ' stopped');
+}
+function deleteExperiment(id){
+  if(!confirm('Delete '+id+'? This cannot be undone.')) return;
+  experiments = experiments.filter(e=>e.id!==id);
+  renderExperiments(); toast('Experiment deleted');
+}
+function exportCsv(id){
+  const csv = "timestamp,voltage,temperature,moisture\n2026-08-14T09:02:00,41.2,28.9,58\n2026-08-14T09:10:00,43.5,29.4,57";
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = id + '.csv';
+  a.click();
+  toast('CSV downloaded');
+}
+ 
+/* ---------------- DEVICES CRUD ---------------- */
+let devices = [
+  {id:'node_04', fw:'v1.3.2', batt:84, status:'online', seen:'12s ago'},
+  {id:'node_12', fw:'v1.3.2', batt:61, status:'online', seen:'8s ago'},
+  {id:'node_21', fw:'v1.2.9', batt:19, status:'idle', seen:'4m ago'},
+  {id:'node_07', fw:'v1.3.0', batt:null, status:'offline', seen:'2h ago'},
+];
+function renderDevices(){
+  const tb = document.getElementById('dev-tbody');
+  if(devices.length===0){ tb.innerHTML = '<tr class="empty-row"><td colspan="6">No devices registered.</td></tr>'; return; }
+  tb.innerHTML = devices.map(d=>`
+    <tr>
+      <td>${d.id}</td><td>${d.fw}</td><td>${d.batt!==null? d.batt+'%':'—'}</td>
+      <td><span class="status-pill ${d.status}">${d.status.charAt(0).toUpperCase()+d.status.slice(1)}</span></td>
+      <td>${d.seen}</td>
+      <td class="actions">
+        <button class="btn small" onclick="openDevModal('${d.id}')">Edit</button>
+        <button class="btn ghost small" onclick="deleteDevice('${d.id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+function openDevModal(editId){
+  const isEdit = !!editId;
+  document.getElementById('dev-modal-title').textContent = isEdit ? 'Edit device' : 'Register device';
+  document.getElementById('dev-edit-id').value = editId || '';
+  if(isEdit){
+    const d = devices.find(x=>x.id===editId);
+    document.getElementById('dev-id').value = d.id;
+    document.getElementById('dev-id').disabled = true;
+    document.getElementById('dev-fw').value = d.fw;
+    document.getElementById('dev-batt').value = d.batt ?? '';
+    document.getElementById('dev-status').value = d.status;
+  } else {
+    document.getElementById('dev-id').disabled = false;
+    document.getElementById('dev-id').value = '';
+    document.getElementById('dev-fw').value = '';
+    document.getElementById('dev-batt').value = '';
+    document.getElementById('dev-status').value = 'online';
+  }
+  document.getElementById('dev-modal').classList.add('open');
+}
+function saveDevice(){
+  const editId = document.getElementById('dev-edit-id').value;
+  const id = document.getElementById('dev-id').value.trim();
+  const fw = document.getElementById('dev-fw').value.trim() || 'v1.0.0';
+  const batt = document.getElementById('dev-batt').value;
+  const status = document.getElementById('dev-status').value;
+  if(!id){ toast('ESP32 ID is required'); return; }
+  if(editId){
+    devices = devices.map(d=> d.id===editId ? {...d, fw, batt: batt===''?null:Number(batt), status} : d);
+    toast('Device updated');
+  } else {
+    if(devices.some(d=>d.id===id)){ toast('That ID already exists'); return; }
+    devices.push({id, fw, batt: batt===''?null:Number(batt), status, seen:'just now'});
+    toast('Device registered');
+  }
+  renderDevices(); closeModal('dev-modal');
+}
+function deleteDevice(id){
+  if(!confirm('Remove '+id+' from the fleet?')) return;
+  devices = devices.filter(d=>d.id!==id);
+  renderDevices(); toast('Device removed');
+}
+ 
+/* ---------------- ANALYTICS (filters only, no CRUD) ---------------- */
+function refreshAnalytics(){
+  const tree = document.getElementById('an-tree').value;
+  const range = document.getElementById('an-range').value;
+  document.getElementById('an-tag').textContent = tree + ' · ' + range;
+  document.getElementById('an-chart').textContent = 'Trend for ' + tree + ' (' + range + ') — chart renders here';
+  toast('Analytics filters applied');
+}
+ 
+/* init */
+renderAlerts(); renderExperiments(); renderDevices();
+</script>
+</body>
+</html>
+ 

@@ -1,0 +1,4 @@
+Date,Device_ID,Bioelectric_mV,Soil_Moisture,Temperature_C,Humidity,Anomaly_Type,Anomaly_Label
+2026-08-26,esp32-01,12.4,34.2,29.1,61.0,Normal,0
+2026-08-26,esp32-01,12.4,34.2,29.1,61.0,Normal,0
+2026-08-26,esp32-01,10.0,8.0,44.0,12.0,Fire_Risk,1
