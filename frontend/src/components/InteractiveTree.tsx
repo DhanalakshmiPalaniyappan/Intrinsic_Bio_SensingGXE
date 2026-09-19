@@ -1,6 +1,6 @@
-﻿import React from "react";
-
 export default function InteractiveTree({ activeNode = "Trunk", onSelectNode }: { activeNode?: string; onSelectNode?: (name: string) => void }) {
+  // activeNode passed for future node highlight
+  void activeNode;
   return (
     <div className="relative w-full h-[280px] flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-b from-[#0D1C16]/80 to-[#07110D]/95 border border-[#19382B]/60 p-4">
       {/* Bioluminescent Ambient Glow */}

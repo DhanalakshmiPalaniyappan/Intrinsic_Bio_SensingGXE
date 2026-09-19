@@ -15,7 +15,7 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await api.post("/auth/login", { username, password });
-      localStorage.setItem("token", res.data.access_token);
+      localStorage.setItem("access_token", res.data.access_token);
       navigate("/dashboard");
     } catch {
       setError("Invalid username or password");
@@ -25,33 +25,34 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bio-bg">
+    <div className="min-h-screen flex items-center justify-center bio-grid-bg px-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-bio-card p-8 rounded-lg shadow-xl w-full max-w-sm border border-bio-accent/10"
+        className="bg-bio-card border border-bio-border rounded-xl shadow-glow-sm p-8 w-full max-w-sm"
       >
-        <h1 className="text-xl font-semibold text-bio-text mb-1">
-          Intrinsic Bio-Sensing
-        </h1>
-        <p className="text-bio-muted text-sm mb-6">Tree Monitoring Platform</p>
+        <div className="flex items-center gap-2 text-bio-text font-bold tracking-tight mb-1">
+          <span className="text-bio-accent text-xl">🌿</span>
+          <span>INTRINSIC BIO-SENSING</span>
+        </div>
+        <p className="text-bio-muted text-xs mb-6">Forest Intelligence System</p>
 
         {error && (
-          <div className="bg-bio-critical/10 text-bio-critical text-sm rounded px-3 py-2 mb-4 border border-bio-critical/30">
+          <div className="bg-bio-critical/10 border border-bio-critical/40 text-bio-critical text-sm rounded-lg px-3 py-2 mb-4">
             {error}
           </div>
         )}
 
-        <label className="block text-sm text-bio-muted mb-1">Username</label>
+        <label className="block text-xs text-bio-muted mb-1">Username</label>
         <input
-          className="w-full mb-4 px-3 py-2 rounded bg-bio-bg text-bio-text border border-bio-muted/30 focus:outline-none focus:border-bio-accent"
+          className="w-full mb-4 px-3 py-2 rounded-lg bg-bio-elevated text-bio-text border border-bio-border focus:outline-none focus:border-bio-accent text-sm"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
 
-        <label className="block text-sm text-bio-muted mb-1">Password</label>
+        <label className="block text-xs text-bio-muted mb-1">Password</label>
         <input
           type="password"
-          className="w-full mb-6 px-3 py-2 rounded bg-bio-bg text-bio-text border border-bio-muted/30 focus:outline-none focus:border-bio-accent"
+          className="w-full mb-6 px-3 py-2 rounded-lg bg-bio-elevated text-bio-text border border-bio-border focus:outline-none focus:border-bio-accent text-sm"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
@@ -59,7 +60,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-bio-accent hover:bg-bio-accent/90 disabled:opacity-50 text-bio-bg font-semibold py-2 rounded transition"
+          className="w-full bg-bio-accent hover:shadow-glow disabled:opacity-50 text-bio-bg font-medium py-2 rounded-lg transition text-sm"
         >
           {loading ? "Signing in..." : "Sign In"}
         </button>

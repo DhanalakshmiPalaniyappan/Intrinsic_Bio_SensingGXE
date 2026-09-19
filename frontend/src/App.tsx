@@ -1,10 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
 
-// Replace these with your real pages as you build them (Live Monitoring,
-// Analytics, Devices, Map View, Reports, Settings) — kept minimal here so
-// the routes wired in Sidebar.tsx don't 404.
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
 function Placeholder({ name }: { name: string }) {
   return (
     <div className="text-bio-text">
@@ -20,7 +23,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<Layout />}>
+        <Route path="/login" element={<Login />} />
+        <Route
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/live" element={<Placeholder name="Live Monitoring" />} />

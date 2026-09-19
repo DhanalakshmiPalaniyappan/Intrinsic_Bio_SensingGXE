@@ -30,7 +30,7 @@ export default function DataFlowDiagram() {
           />
         </div>
 
-        {NODES.map((n, i) => (
+        {NODES.map((n) => (
           <div key={n.label} className="relative z-10 flex flex-col items-center gap-2 flex-1">
             <div className="w-12 h-12 rounded-full bg-bio-elevated border border-bio-accent/30 flex items-center justify-center text-lg shadow-glow-sm">
               {n.icon}

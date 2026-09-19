@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body, #root {
+  min-height: 100%;
+}
 :root {
   --text: #6b6375;
   --text-h: #08060d;
