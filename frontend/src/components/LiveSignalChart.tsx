@@ -1,79 +1,48 @@
-import { useEffect, useState } from "react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-} from "recharts";
+import { useState, useEffect } from "react";
+import WaveformCanvas from "./WaveformCanvas";
+import { useTelemetry } from "../context/TelemetryContext";
 
-interface Point {
-  time: string;
-  mv: number;
+interface Props {
+  deviceLabel?: string;
 }
 
-const RANGES = ["1H", "6H", "12H", "24H"] as const;
+const RANGES = ["1H", "6H", "12H", "24H"];
 
-function genSeed(n: number): Point[] {
-  const now = Date.now();
-  return Array.from({ length: n }, (_, i) => {
-    const t = new Date(now - (n - i) * 60000);
-    return {
-      time: t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      mv: 700 + Math.sin(i / 5) * 60 + (Math.random() - 0.5) * 30,
-    };
-  });
-}
+export default function LiveSignalChart({ deviceLabel = "Tree T-04" }: Props) {
+  const { hertz } = useTelemetry();
+  const [selectedRange, setSelectedRange] = useState("6H");
+  const [currentMv, setCurrentMv] = useState(742);
 
-function CustomTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-bio-elevated border border-bio-border rounded-lg px-3 py-2 text-xs shadow-glow-sm">
-      <div className="text-bio-muted">{label}</div>
-      <div className="text-bio-accent font-semibold">{Math.round(payload[0].value)} mV</div>
-    </div>
-  );
-}
-
-export default function LiveSignalChart({ deviceLabel = "Tree T-04" }: { deviceLabel?: string }) {
-  const [range, setRange] = useState<typeof RANGES[number]>("1H");
-  const [data, setData] = useState<Point[]>(() => genSeed(30));
-
+  // Live real-time value updates
   useEffect(() => {
-    const id = setInterval(() => {
-      setData((prev) => {
-        const next = prev.slice(1);
-        const t = new Date();
-        const last = prev[prev.length - 1]?.mv ?? 742;
-        next.push({
-          time: t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          mv: Math.max(600, Math.min(820, last + (Math.random() - 0.5) * 24)),
-        });
-        return next;
-      });
-    }, 2500);
-    return () => clearInterval(id);
+    const interval = setInterval(() => {
+      const delta = (Math.random() - 0.5) * 8;
+      setCurrentMv((prev) => Math.round(Math.max(710, Math.min(780, prev + delta))));
+    }, 2000);
+    return () => clearInterval(interval);
   }, []);
 
-  const current = Math.round(data[data.length - 1]?.mv ?? 0);
-  const min = Math.round(Math.min(...data.map((d) => d.mv)));
-  const max = Math.round(Math.max(...data.map((d) => d.mv)));
-
   return (
-    <div className="bg-bio-card border border-bio-border rounded-xl p-5 card-hover">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2 text-bio-text font-semibold">
-          <span className="text-bio-accent">〜</span> Live Bio-Signal ({deviceLabel})
+    <div className="bg-bio-card border border-bio-border rounded-2xl p-6 space-y-4 hover:border-bio-accent/40 transition-all">
+      {/* Header Row */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-bio-border/40 pb-3">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-bio-accent animate-pulse" />
+          <h3 className="font-bold text-base text-bio-text tracking-tight font-mono">
+            Live Bio-Signal — {deviceLabel}
+          </h3>
         </div>
-        <div className="flex gap-1 bg-bio-bg2 rounded-lg p-1 border border-bio-border">
+
+        {/* Range Selector */}
+        <div className="flex items-center gap-1 bg-bio-bg p-1 rounded-xl border border-bio-border text-xs font-mono">
           {RANGES.map((r) => (
             <button
               key={r}
-              onClick={() => setRange(r)}
-              className={`px-3 py-1 text-xs rounded-md transition-colors ${
-                range === r ? "bg-bio-accent text-bio-bg font-semibold" : "text-bio-muted hover:text-bio-text"
+              onClick={() => setSelectedRange(r)}
+              className={`px-3 py-1 rounded-lg transition-all ${
+                selectedRange === r
+                  ? "bg-bio-accent text-black font-bold shadow-glow-sm"
+                  : "text-bio-muted hover:text-bio-text"
               }`}
             >
               {r}
@@ -82,50 +51,54 @@ export default function LiveSignalChart({ deviceLabel = "Tree T-04" }: { deviceL
         </div>
       </div>
 
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-            <defs>
-              <linearGradient id="signalFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#27E6B0" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#27E6B0" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="#19382B" strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="time" tick={{ fill: "#61766B", fontSize: 11 }} axisLine={{ stroke: "#19382B" }} tickLine={false} minTickGap={30} />
-            <YAxis domain={[550, 850]} tick={{ fill: "#61766B", fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#27E6B0", strokeWidth: 1, strokeDasharray: "4 4" }} />
-            <Area
-              type="monotone"
-              dataKey="mv"
-              stroke="#27E6B0"
-              strokeWidth={2}
-              fill="url(#signalFill)"
-              isAnimationActive={false}
-              style={{ filter: "drop-shadow(0 0 6px rgba(39,230,176,0.45))" }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+      {/* Main Waveform Display Area */}
+      <div className="relative bg-bio-bg/90 border border-bio-border rounded-xl p-4 overflow-hidden">
+        {/* Top Info Badges inside Canvas */}
+        <div className="flex justify-between items-center text-[11px] font-mono text-bio-muted mb-2 relative z-10">
+          <span className="text-bio-muted font-semibold">mV</span>
+          <span className="bg-bio-elevated text-bio-accent border border-bio-border px-2.5 py-0.5 rounded text-[10px] font-bold">
+            SAMPLING: {hertz} Hz (Nyquist Compliant)
+          </span>
+        </div>
+
+        {/* Live Canvas Waveform */}
+        <WaveformCanvas height={160} color="#27E6B0" hertz={hertz} speed={2.0} amplitude={24} />
+
+        {/* Timestamps X-Axis */}
+        <div className="flex justify-between items-center text-[10px] font-mono text-bio-faint pt-2 border-t border-bio-border/40">
+          <span>09:25</span>
+          <span>09:35</span>
+          <span>09:45</span>
+          <span>09:55</span>
+          <span>10:05</span>
+          <span>10:15</span>
+          <span className="text-bio-accent font-bold">10:24 AM</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 pt-4 border-t border-bio-border text-sm">
-        <div>
-          <div className="text-bio-muted text-xs">Current Value</div>
-          <div className="text-bio-text font-semibold">{current} mV</div>
+      {/* Footer Metrics Summary Bar matching Image 3 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 font-mono">
+        <div className="bg-bio-bg/60 p-3 rounded-xl border border-bio-border/40">
+          <div className="text-[10px] text-bio-muted uppercase mb-1">CURRENT VALUE</div>
+          <div className="text-sm font-bold text-bio-text">{currentMv} mV</div>
         </div>
-        <div>
-          <div className="text-bio-muted text-xs">Trend</div>
-          <div className="text-bio-accent font-medium flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-bio-accent animate-breathe" /> Stable
+
+        <div className="bg-bio-bg/60 p-3 rounded-xl border border-bio-border/40">
+          <div className="text-[10px] text-bio-muted uppercase mb-1">DOMINANT FREQUENCY</div>
+          <div className="text-sm font-bold text-bio-accent">12.4 Hz</div>
+        </div>
+
+        <div className="bg-bio-bg/60 p-3 rounded-xl border border-bio-border/40">
+          <div className="text-[10px] text-bio-muted uppercase mb-1">TREND</div>
+          <div className="text-sm font-bold text-emerald-400 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Stable
           </div>
         </div>
-        <div>
-          <div className="text-bio-muted text-xs">Signal Range</div>
-          <div className="text-bio-text font-semibold">{min} – {max} mV</div>
-        </div>
-        <div>
-          <div className="text-bio-muted text-xs">Dominant Frequency</div>
-          <div className="text-bio-text font-semibold">12.4 Hz</div>
+
+        <div className="bg-bio-bg/60 p-3 rounded-xl border border-bio-border/40">
+          <div className="text-[10px] text-bio-muted uppercase mb-1">SIGNAL RANGE</div>
+          <div className="text-sm font-bold text-bio-text">612 – 818 mV</div>
         </div>
       </div>
     </div>

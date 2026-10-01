@@ -44,8 +44,11 @@ mqtt_client = None
 @app.on_event("startup")
 def startup_event():
     global mqtt_client
-    mqtt_module.main_event_loop = asyncio.get_event_loop()
-    mqtt_client = start_mqtt_client()
+    try:
+        mqtt_module.main_event_loop = asyncio.get_event_loop()
+        mqtt_client = start_mqtt_client()
+    except Exception as e:
+        print(f"Warning during startup: {e}")
 
 
 @app.on_event("shutdown")

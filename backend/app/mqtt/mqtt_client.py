@@ -99,7 +99,11 @@ def start_mqtt_client():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.on_connect = on_connect
     client.on_message = on_message
-    client.connect(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
-    client.loop_start()
+    try:
+        client.connect_async(MQTT_BROKER_HOST, MQTT_BROKER_PORT, 60)
+        client.loop_start()
+        print(f"MQTT client attempting async connection to {MQTT_BROKER_HOST}:{MQTT_BROKER_PORT}")
+    except Exception as e:
+        print(f"Warning: Could not connect to MQTT broker ({e}). Simulation & REST APIs will continue working.")
     mqtt_client_instance = client
     return client
